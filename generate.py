@@ -2,6 +2,8 @@ import random
 import string
 import subprocess
 import os
+import sys
+maskname = 'mask'+str(random.randint(0,10000)) + '.png'
 
 unif = random.uniform
 width = 200
@@ -56,12 +58,13 @@ def random_blob(center):
     )
 
 def random_mask():
-    command = 'convert -size 300x300 xc:none -fill black {blob} {blob2} {blob3} -gravity center -crop {width}x{height}+0+0 +repage -alpha extract -negate mask.png'.format(
+    command = 'convert -size 300x300 xc:none -fill black {blob} {blob2} {blob3} -gravity center -crop {width}x{height}+0+0 +repage -alpha extract -negate {maskname}'.format(
         width = width,
         height = height,
         blob = random_blob(300/2),
         blob2 = random_blob(300/2),
         blob3 = random_blob(300/2),
+        maskname=maskname,
     )
     os.system(command)
 
@@ -114,15 +117,16 @@ def random_text_params():
         kern = random.randint(-10, -5),
     )
 
+output_dir = sys.argv[2]
+N = int(sys.argv[1])
+
 def generate():
     string = random_string()
-    filename = '/data/captcha/generated/' + string.lower() + '.png'
+    filename = os.path.join(output_dir, (string.lower() + '.png'))
 
     command = 'convert -background "{bg}" -fill "{fg}" {text_params} label:"{string}" {pad} {wave} -resize {width}x{height} -gravity {grav} -extent {width}x{height} {distort} -sample 80% -sample {width}x{height} "{filename}" '.format(
         bg = random_color(),
         fg = random_color(),
-        #bg = 'white',
-        #fg = 'black',
         text_params = random_text_params(),
         string = string,
         pad=random_pad(),
@@ -137,8 +141,9 @@ def generate():
     os.system(command)
     if unif(0,1) > .5:
         random_mask()
-        mask = 'convert {filename} -mask mask.png -negate +mask {filename}'.format(
+        mask = 'convert {filename} -mask {maskname} -negate +mask {filename}'.format(
             filename = filename,
+            maskname = maskname,
         )
         os.system(mask)
 
@@ -159,6 +164,6 @@ def easy():
     os.system(command)
 
 
-for i in range(1000000):
-    print i 
-    easy()
+for i in range(N):
+    print i
+    generate()
