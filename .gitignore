@@ -1,0 +1,14 @@
+*.o
+*.dSYM
+*.csv
+*.out
+recaptcha10k/
+easy/
+*.png
+
+# OS Generated #
+.DS_Store*
+ehthumbs.db
+Icon?
+Thumbs.db
+*.swp
