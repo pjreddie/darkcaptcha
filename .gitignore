@@ -5,6 +5,7 @@
 recaptcha10k/
 easy/
 *.png
+hostfonts.txt
 
 # OS Generated #
 .DS_Store*

@@ -3,7 +3,8 @@ import string
 import subprocess
 import os
 import sys
-maskname = 'mask'+str(random.randint(0,10000)) + '.png'
+tmp_dir = '/tmp/'
+maskname = os.path.join(tmp_dir, 'mask'+str(random.randint(0,100000)) + '.png')
 
 unif = random.uniform
 width = 200
@@ -11,6 +12,12 @@ height = 60
 
 gw = 5
 gh = 3
+
+fontcommand = "convert -list font | grep Font: | sed 's/.*Font: //' > hostfonts.txt"
+os.system(fontcommand)
+hostfonts = open("hostfonts.txt").read().strip().split()
+whitelist = open("fonts.txt").read().strip().split()
+fonts = [font for font in hostfonts if font in whitelist]
 
 # http://stackoverflow.com/questions/13998901/generating-a-random-hex-color-in-python
 
@@ -42,7 +49,6 @@ def random_string():
     s = "".join([random.choice(letters) for i in range(num)])
     return s
 
-fonts = open("fonts.txt").read().strip().split()
 def random_font():
     #fonts = ['helvetica', 'times-new-roman', 'georgia', 'courier']
     font = random.choice(fonts)
@@ -122,9 +128,10 @@ N = int(sys.argv[1])
 
 def generate():
     string = random_string()
+    tmpfile = os.path.join(tmp_dir, (string.lower() + '.png'))
     filename = os.path.join(output_dir, (string.lower() + '.png'))
 
-    command = 'convert -background "{bg}" -fill "{fg}" {text_params} label:"{string}" {pad} {wave} -resize {width}x{height} -gravity {grav} -extent {width}x{height} {distort} -sample 80% -sample {width}x{height} "{filename}" '.format(
+    command = 'convert -background "{bg}" -fill "{fg}" {text_params} label:"{string}" {pad} {wave} -resize {width}x{height} -gravity {grav} -extent {width}x{height} {distort} -sample 80% -sample {width}x{height} "{tmpfile}" '.format(
         bg = random_color(),
         fg = random_color(),
         text_params = random_text_params(),
@@ -136,16 +143,23 @@ def generate():
         height=height,
         grav = random_gravity(),
         distort=random_distort(),
-        filename = filename,
+        tmpfile = tmpfile,
     )
     os.system(command)
     if unif(0,1) > .5:
         random_mask()
-        mask = 'convert {filename} -mask {maskname} -negate +mask {filename}'.format(
+        finalize = 'convert {tmpfile} -mask {maskname} -negate +mask {filename}; rm {tmpfile}'.format(
             filename = filename,
+            tmpfile = tmpfile,
             maskname = maskname,
         )
-        os.system(mask)
+        os.system(finalize)
+    else:
+        finalize = 'mv {tmpfile} {filename}'.format(
+            filename=filename,
+            tmpfile=tmpfile,
+        )
+        os.system(finalize)
 
 def easy():
     string = easy_string()
@@ -165,5 +179,5 @@ def easy():
 
 
 for i in range(N):
-    print i
+    if(i%1000==0): print i
     generate()
